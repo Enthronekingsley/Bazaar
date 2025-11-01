@@ -25,8 +25,6 @@ const BestSelling = () => {
     .sort((a, b) => b.averageRating - a.averageRating)
     .slice(0, displayQuantity);
 
-  console.log(productWithRatings);
-
   return (
     <section className="my-30 px-6 max-w-6xl mx-auto">
       <Title

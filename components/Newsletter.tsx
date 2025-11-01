@@ -5,7 +5,7 @@ import Title from "./Title";
 
 const Newsletter = () => {
   return (
-    <div className="flex flex-col justify-center items-center mx-4 my-36">
+    <div className="flex flex-col justify-center bg-primary-200 items-center px-4 py-20">
       <Title
         title="Join Newsletter"
         description="Subscribe to get exclusive deals, new arrivals, and insider updates delivered straight to your inbox every week."

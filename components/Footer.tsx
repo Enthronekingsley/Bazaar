@@ -28,7 +28,7 @@ const Footer = () => {
       title: "CONTACT",
       links: [
         { text: "+2348122273000", path: "/", icon: Phone },
-        { text: "contact@example.com", path: "/", icon: Mail },
+        { text: "info@bazaar.com", path: "/", icon: Mail },
         { text: "245 Abuja, 94102", path: "/", icon: MapPinIcon },
       ],
     },
@@ -42,7 +42,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="w-full bg-primary-200 pt-10">
+    <footer className="w-full bg-primary-900 pt-10 text-white">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-30 py-10 border-b border-slate-500/30 text-slate-500">
           <div className="sm:w-1/3">
@@ -54,7 +54,7 @@ const Footer = () => {
               className="mb-4"
             />
 
-            <p className="text-slate-600 text-sm max-w-[410px]">
+            <p className="text-slate-300 text-sm max-w-[410px]">
               Welcome to Bazaar, your ultimate destination for the latest and
               smartest gadgets. From smartphones and smartwatches to essential
               accessories, we bring you the best innovation - all in one place.
@@ -76,14 +76,14 @@ const Footer = () => {
           <div className="flex flex-wrap justify-between w-full md:w-[45%] gap-5 text-sm">
             {linkSections.map((section, index) => (
               <div key={index} className="flex flex-col">
-                <h3 className="font-semibold mb-3 text-slate-800">
+                <h3 className="font-semibold mb-3 text-white">
                   {section.title}
                 </h3>
                 <ul className="space-y-1.5">
                   {section.links.map((link, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-2 text-slate-600 hover:underline decoration-1 transition"
+                      className="flex items-center gap-2 text-slate-300 hover:text-white hover:underline decoration-1 transition"
                     >
                       {link.icon && <link.icon size={16} />}
                       <Link href={link.path}>{link.text}</Link>

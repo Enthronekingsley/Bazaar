@@ -1,71 +1,220 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
-import { assets } from "@/assets/assets";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Shield,
+  Truck,
+} from "lucide-react";
+import { slides } from "@/assets/assets";
 import { Button } from "./ui/button";
+import { useState, useEffect } from "react";
 
 export default function Hero() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState<"next" | "prev">("next");
+
+  const nextSlide = () => {
+    setDirection("next");
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const prevSlide = () => {
+    setDirection("prev");
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  useEffect(() => {
+    const interval = setInterval(nextSlide, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="relative mx-auto max-w-7xl px-6 lg:px-12 py-24">
-      <div className="absolute top-0 left-0 w-[70%] h-[90%] bg-gradient-to-br from-gray-100 via-white to-gray-50 rounded-br-[4rem] -z-10" />
+    <section className="relative mx-auto max-w-7xl px-6 lg:px-12 py-10 overflow-hidden">
+      <div className="relative">
+        <div className="relative h-[700px] lg:h-[650px] overflow-hidden rounded-4xl">
+          {slides.map((slide, index) => {
+            const isActive = index === currentSlide;
+            return (
+              <div
+                key={index}
+                className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.45,0,0.55,1)] ${
+                  isActive
+                    ? "opacity-100 translate-x-0 z-20"
+                    : direction === "next"
+                    ? "opacity-0 -translate-x-full z-10"
+                    : "opacity-0 translate-x-full z-10"
+                }`}
+              >
+                <div className={`absolute inset-0 ${slide.background} -z-20`} />
+                <div className={`absolute inset-0 ${slide.pattern} -z-10`} />
 
-      <div className="grid lg:grid-cols-2 gap-16 items-center">
-        <div className="space-y-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-[2px] bg-slate-800"></div>
-            <p className="uppercase text-xs font-semibold tracking-widest text-slate-600">
-              New Arrival 2025
-            </p>
-          </div>
+                <div className="absolute top-10 left-10 w-32 h-32 bg-white/20 rounded-full blur-xl" />
+                <div className="absolute bottom-10 right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
 
-          <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight text-slate-900">
-            Redefine your <br /> <span className="text-orange-500">style.</span>
-          </h1>
+                <div
+                  className={`grid lg:grid-cols-2 gap-12 items-center h-full p-8 lg:p-12 ${slide.layout}`}
+                >
+                  <div
+                    className={`space-y-8 ${
+                      slide.layout === "text-center"
+                        ? "lg:col-span-2 text-center"
+                        : ""
+                    } ${slide.layout === "text-right" ? "lg:order-2" : ""}`}
+                  >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-white/20">
+                      <Star className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm font-semibold text-gray-700">
+                        {slide.badge}
+                      </span>
+                    </div>
 
-          <p className="text-gray-600 max-w-md text-lg">
-            Explore our latest collection designed to merge comfort with modern
-            sophistication. Crafted with premium materials for every occasion.
-          </p>
+                    <div className="space-y-6">
+                      <h1 className="text-5xl lg:text-7xl font-black leading-tight text-gray-900">
+                        {slide.title} <br />
+                        <span className={slide.accentColor}>
+                          {slide.highlight}
+                        </span>
+                      </h1>
 
-          <div className="flex items-center gap-4">
-            <Button className="px-8 py-3 bg-slate-900 text-white rounded-full font-medium hover:scale-105 transition">
-              Explore Now
-            </Button>
-            <button className="flex items-center gap-2 text-slate-800 font-medium hover:underline cursor-pointer hover:translate-x-2 duration-500">
-              View Collection <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+                      <p className="text-gray-600 text-xl max-w-lg leading-relaxed">
+                        {slide.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <Button
+                        className={`px-10 py-4 text-white rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 ${slide.buttonColor}`}
+                      >
+                        Shop Collection
+                      </Button>
+                      <button className="flex items-center gap-3 text-gray-700 font-semibold hover:gap-4 transition-all duration-300 group">
+                        Learn More
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+
+                    <div className="flex gap-8 pt-6">
+                      <div className="flex items-center gap-2">
+                        <Truck className="w-5 h-5 text-green-500" />
+                        <span className="text-sm text-gray-600">
+                          Free Shipping
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-blue-500" />
+                        <span className="text-sm text-gray-600">
+                          2-Year Warranty
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`relative ${
+                      slide.layout === "text-center" ? "lg:col-span-2" : ""
+                    } ${slide.layout === "text-right" ? "lg:order-1" : ""}`}
+                  >
+                    <div
+                      className={`grid gap-4 ${
+                        index === 0
+                          ? "grid-cols-2"
+                          : index === 1
+                          ? "grid-cols-3"
+                          : index === 2
+                          ? "grid-cols-1 lg:grid-cols-2"
+                          : "grid-cols-2 lg:grid-cols-3"
+                      }`}
+                    >
+                      {slide.images.map((src, imageIndex) => (
+                        <div
+                          key={imageIndex}
+                          className={`relative overflow-hidden rounded-2xl shadow-2xl group ${
+                            index === 1 && imageIndex === 0
+                              ? "col-span-2 row-span-2"
+                              : index === 3 && imageIndex === 0
+                              ? "col-span-2"
+                              : ""
+                          }`}
+                        >
+                          <Image
+                            src={src}
+                            alt={`Product ${imageIndex + 1}`}
+                            width={400}
+                            height={400}
+                            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                          <div className="absolute bottom-4 left-4 right-4 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                            <Button className="w-full bg-white/90 backdrop-blur-sm text-gray-900 hover:bg-white">
+                              Quick View
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/20 rounded-full blur-lg" />
+                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="relative grid grid-cols-2 gap-4">
-          <div className="absolute -bottom-12 -right-12 w-80 h-80 bg-orange-100 rounded-full blur-3xl opacity-50 -z-10" />
+        <button
+          onClick={prevSlide}
+          className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm hover:bg-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-30 border border-white/20"
+        >
+          <ChevronLeft className="w-6 h-6 text-gray-700" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm hover:bg-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-30 border border-white/20"
+        >
+          <ChevronRight className="w-6 h-6 text-gray-700" />
+        </button>
 
-          {[
-            assets.hero_product_img1,
-            assets.hero_product_img2,
-            assets.product_img5,
-            assets.product_img6,
-          ].map((src, index) => (
-            <div
+        <div className="flex justify-center gap-4 mt-12">
+          {slides.map((slide, index) => (
+            <button
               key={index}
-              className="relative overflow-hidden rounded-3xl shadow-lg group flex items-center justify-center"
+              onClick={() => setCurrentSlide(index)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-500 ${
+                index === currentSlide
+                  ? `bg-white/90 backdrop-blur-sm shadow-lg ${slide.accentColor} font-semibold`
+                  : "bg-white/50 text-gray-400 hover:bg-white/70"
+              }`}
             >
-              <Image
-                src={src}
-                alt={`Product ${index + 1}`}
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  index === currentSlide ? "bg-current" : "bg-gray-400"
+                }`}
               />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
+              <span className="text-sm">0{index + 1}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-between items-center gap-6 mt-20 text-slate-500 text-sm opacity-70">
-        <p>Trusted by 500+ fashion stores</p>
-        <p>Free global shipping</p>
+      <div className="flex flex-wrap justify-center gap-8 mt-16 text-gray-600 text-sm">
+        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+          <Shield className="w-4 h-4" />
+          <span>Trusted by 500+ fashion stores</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+          <Truck className="w-4 h-4" />
+          <span>Free global shipping</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+          <Star className="w-4 h-4 text-yellow-500" />
+          <span>4.9/5 Customer Rating</span>
+        </div>
       </div>
     </section>
   );

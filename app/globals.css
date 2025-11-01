@@ -1,10 +1,21 @@
 @import "tailwindcss";
 
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+
 @theme {
     /* Colors */
   --color-primary-100: #1e79bd;
   --color-primary-200: #b3ddf6; 
   --color-primary: #0d97d9;
+  --color-primary-900: #0a2744;
   --color-secondary: #fbe843;
 
   --color-black-100: #333333;
@@ -21,9 +32,9 @@
   max-width: 90vw !important; 
 }
 
-html, body {
+/* html, body {
   overflow-x: hidden;
-}
+} */
 
 .no-scrollbar::-webkit-scrollbar {
     display: none;

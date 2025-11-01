@@ -16,7 +16,7 @@ import product_img9 from "./product_img9.png";
 import product_img10 from "./product_img10.png";
 import product_img11 from "./product_img11.png";
 import product_img12 from "./product_img12.png";
-import { ClockFadingIcon, HeadsetIcon, SendIcon } from "lucide-react";
+import { Headset, ClockFading, Send } from "lucide-react";
 import profile_pic1 from "./profile_pic1.jpg";
 import profile_pic2 from "./profile_pic2.jpg";
 import profile_pic3 from "./profile_pic3.jpg";
@@ -48,6 +48,85 @@ export const categories = [
   "Earbuds",
   "Mouse",
   "Decoration",
+];
+
+export const slides = [
+  {
+    title: "Redefine your",
+    highlight: "style.",
+    description:
+      "Explore our latest collection designed to merge comfort with modern sophistication. Crafted with premium materials for every occasion.",
+    images: [
+      assets.hero_product_img1,
+      assets.hero_product_img2,
+      assets.product_img5,
+      assets.product_img6,
+    ],
+    background: "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100",
+    accentColor: "text-blue-600",
+    buttonColor: "bg-blue-600 hover:bg-blue-700",
+    layout: "text-left",
+    badge: "Trending Now",
+    pattern:
+      "bg-[radial-gradient(circle_at_30%_70%,#3b82f620_0%,transparent_50%)]",
+  },
+  {
+    title: "Elevate your",
+    highlight: "look.",
+    description:
+      "Discover premium accessories that complement your unique style. Quality craftsmanship meets contemporary design.",
+    images: [
+      assets.product_img5,
+      assets.hero_product_img1,
+      assets.product_img6,
+      assets.hero_product_img2,
+    ],
+    background: "bg-gradient-to-br from-amber-50 via-orange-50 to-red-100",
+    accentColor: "text-amber-600",
+    buttonColor: "bg-amber-600 hover:bg-amber-700",
+    layout: "text-center",
+    badge: "Limited Edition",
+    pattern:
+      "bg-[linear-gradient(45deg,#f59e0b10_25%,transparent_25%),linear-gradient(-45deg,#f59e0b10_25%,transparent_25%)] bg-[size:20px_20px]",
+  },
+  {
+    title: "Unleash your",
+    highlight: "potential.",
+    description:
+      "Innovative designs that keep you ahead of trends. Experience the perfect blend of functionality and fashion.",
+    images: [
+      assets.product_img6,
+      assets.product_img5,
+      assets.hero_product_img2,
+      assets.hero_product_img1,
+    ],
+    background: "bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100",
+    accentColor: "text-emerald-600",
+    buttonColor: "bg-emerald-600 hover:bg-emerald-700",
+    layout: "text-right",
+    badge: "Just Launched",
+    pattern:
+      "bg-[radial-gradient(ellipse_at_70%_20%,#10b98120_0%,transparent_50%)]",
+  },
+  {
+    title: "Discover new",
+    highlight: "horizons.",
+    description:
+      "Step into the future of fashion with cutting-edge designs and sustainable materials that make a statement.",
+    images: [
+      assets.hero_product_img2,
+      assets.product_img6,
+      assets.hero_product_img1,
+      assets.product_img5,
+    ],
+    background: "bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100",
+    accentColor: "text-rose-600",
+    buttonColor: "bg-rose-600 hover:bg-rose-700",
+    layout: "text-left",
+    badge: "Exclusive",
+    pattern:
+      "bg-[conic-gradient(from_90deg_at_50%_50%,#ec489920_0%,transparent_50%)]",
+  },
 ];
 
 // export const dummyRatingsData = [
@@ -711,21 +790,21 @@ export const ourSpecsData = [
     title: "Free Shipping",
     description:
       "Enjoy fast, free delivery on every order no conditions, just reliable doorstep.",
-    icon: SendIcon,
-    accent: "#05DF72",
+    icon: Send,
+    accent: "#0a2744",
   },
   {
     title: "7 Days easy Return",
     description: "Change your mind? No worries. Return any item within 7 days.",
-    icon: ClockFadingIcon,
-    accent: "#FF8904",
+    icon: ClockFading,
+    accent: "#0d97d9",
   },
   {
     title: "24/7 Customer Support",
     description:
       "We're here for you. Get expert help with our customer support.",
-    icon: HeadsetIcon,
-    accent: "#A684FF",
+    icon: Headset,
+    accent: "#b3ddf6",
   },
 ];
 
