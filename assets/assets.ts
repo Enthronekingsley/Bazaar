@@ -48,6 +48,10 @@ export const categories = [
   "Earbuds",
   "Mouse",
   "Decoration",
+  "Camera",
+  "Pen",
+  "Theater",
+  "Cleaner",
 ];
 
 export const slides = [
