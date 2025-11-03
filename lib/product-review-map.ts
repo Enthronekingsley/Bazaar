@@ -3,11 +3,6 @@ import { productDummyData, reviewData } from "@/assets/assets";
 type ProductsType = typeof productDummyData;
 type ReviewsType = typeof reviewData;
 
-interface Product {
-  id: string | number;
-  [key: string]: any;
-}
-
 interface Review {
   productId: string | number;
   [key: string]: any;
