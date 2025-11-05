@@ -10,23 +10,44 @@ const ShopContent = () => {
   const products = useAppSelector((state) => state.product.list);
 
   return (
-    <section className="max-w-7xl min-h-[70vh] mx-auto px-6 flex gap-6">
-      <div className="my-6">
+    <section
+      className="
+        max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 
+        flex flex-col lg:flex-row gap-6
+        min-h-[70vh] my-6
+      "
+    >
+      {/* Filter Sidebar */}
+      <aside
+        className="
+          w-full lg:w-80 
+          lg:sticky lg:top-24
+          lg:self-start
+        "
+      >
         <Filter />
-      </div>
-      <div className="">
+      </aside>
+
+      {/* Product Section */}
+      <main className="flex-1">
         <Link href="">
-          <h1 className="text-2xl text-slate-500 my-6 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl text-slate-500 mb-6 flex items-center gap-2">
             All <span className="text-slate-700 font-medium">Products</span>
           </h1>
         </Link>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 xl:gap-12 mb-32">
+        <div
+          className="
+            grid 
+            grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 
+            gap-4 sm:gap-6 xl:gap-10
+          "
+        >
           {products.map((product) => (
             <ProductCard product={product} key={product.id} />
           ))}
         </div>
-      </div>
+      </main>
     </section>
   );
 };

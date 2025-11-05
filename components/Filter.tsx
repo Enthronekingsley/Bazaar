@@ -1,11 +1,21 @@
+"use client";
+
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { ChevronDown, ChevronUp, Star, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter as FilterIcon, X } from "lucide-react";
 import { categories } from "@/assets/assets";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "./ui/input";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+  DrawerClose,
+} from "@/components/ui/drawer";
 
 interface FilterState {
   categories: string[];
@@ -95,20 +105,20 @@ const Filter = () => {
   return (
     <div className="w-full">
       {/* Mobile Filter Toggle */}
-      <div className="lg:hidden mb-4">
+      <div className="lg:hidden mb-4 sticky top-16 z-30 bg-white">
         <Button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
           variant="outline"
-          className="flex justify-center items-center w-full p-6 border border-gray-300 bg-white cursor-pointer shadow-lg"
+          className="flex justify-center items-center w-full p-4 sm:p-5 border border-gray-300 bg-white cursor-pointer shadow-sm rounded-md"
         >
-          <span className="font-medium text-slate-500">Filters</span>
+          <span className="font-medium text-slate-600">Filters</span>
           <div className="flex items-center gap-2">
             {getActiveFiltersCount() > 0 && (
               <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                 {getActiveFiltersCount()}
               </span>
             )}
-            {isFilterOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            {isFilterOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
         </Button>
       </div>
@@ -117,7 +127,7 @@ const Filter = () => {
       <div
         className={`${
           isFilterOpen ? "block" : "hidden"
-        } p-6 border border-gray-200 rounded-lg bg-white lg:block lg:w-80 shadow-lg`}
+        } p-4 sm:p-6 border border-gray-200 rounded-lg bg-white lg:block lg:w-full shadow-md`}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
