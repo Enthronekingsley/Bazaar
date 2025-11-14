@@ -11,8 +11,29 @@ import {
 import { Button } from "./ui/button";
 import { FilterIcon, X } from "lucide-react";
 import Filter from "./Filter";
+import { FilterState } from "@/app/(root)/shop/page";
 
-export function MobileFilter() {
+interface MobileFilterProps {
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  handleCategoryChange: (category: string) => void;
+  handlePriceChange: (type: "min" | "max", value: number) => void;
+  handleRatingChange: (rating: number) => void;
+  handleStockChange: (value: boolean | null) => void;
+  clearAllFilters: () => void;
+  getActiveFiltersCount: () => number;
+}
+
+export function MobileFilter({
+  filters,
+  setFilters,
+  handleCategoryChange,
+  handlePriceChange,
+  handleRatingChange,
+  handleStockChange,
+  clearAllFilters,
+  getActiveFiltersCount,
+}: MobileFilterProps) {
   return (
     <Drawer direction="left">
       <DrawerTrigger asChild>
@@ -41,7 +62,16 @@ export function MobileFilter() {
         </DrawerHeader>
 
         <div className="p-4 overflow-y-auto h-full">
-          <Filter />
+          <Filter
+            filters={filters}
+            setFilters={setFilters}
+            handleCategoryChange={handleCategoryChange}
+            handlePriceChange={handlePriceChange}
+            handleRatingChange={handleRatingChange}
+            handleStockChange={handleStockChange}
+            clearAllFilters={clearAllFilters}
+            getActiveFiltersCount={getActiveFiltersCount}
+          />
         </div>
       </DrawerContent>
     </Drawer>

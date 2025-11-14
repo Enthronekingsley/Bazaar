@@ -11,7 +11,7 @@ const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
 
 interface ProductCardProps {
   product: Product;
-  viewMode?: string;
+  viewMode?: "grid" | "list";
 }
 
 const ProductCard = ({ product, viewMode = "grid" }: ProductCardProps) => {

@@ -8,19 +8,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "./ui/input";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { FilterState } from "@/app/(root)/shop/page";
 
-interface FilterState {
-  categories: string[];
-  priceRange: {
-    min: number;
-    max: number;
-  };
-  ratings: number[];
-  inStock: boolean | null;
-  sortBy: string;
+interface FilterProps {
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  handleCategoryChange: (category: string) => void;
+  handlePriceChange: (type: "min" | "max", value: number) => void;
+  handleRatingChange: (rating: number) => void;
+  handleStockChange: (value: boolean | null) => void;
+  clearAllFilters: () => void;
+  getActiveFiltersCount: () => number;
 }
 
-const Filter = () => {
+const Filter = ({
+  filters,
+  setFilters,
+  handleCategoryChange,
+  handlePriceChange,
+  handleRatingChange,
+  handleStockChange,
+  clearAllFilters,
+  getActiveFiltersCount,
+}: FilterProps) => {
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [openSection, setOpenSections] = useState({
     categories: true,
@@ -28,70 +38,12 @@ const Filter = () => {
     ratings: true,
     availability: true,
   });
-  const [filters, setFilters] = useState<FilterState>({
-    categories: [],
-    priceRange: { min: 0, max: 200 },
-    ratings: [],
-    inStock: null,
-    sortBy: "Featured",
-  });
 
   const toggleSection = (section: keyof typeof openSection) => {
     setOpenSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category],
-    }));
-  };
-
-  const handlePriceChange = (type: "min" | "max", value: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      priceRange: { ...prev.priceRange, [type]: value },
-    }));
-  };
-
-  const handleRatingChange = (rating: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      ratings: prev.ratings.includes(rating)
-        ? prev.ratings.filter((r) => r !== rating)
-        : [...prev.ratings, rating],
-    }));
-  };
-
-  const handleStockChange = (value: boolean | null) => {
-    setFilters((prev) => ({
-      ...prev,
-      inStock: value,
-    }));
-  };
-
-  const clearAllFilters = () => {
-    setFilters({
-      categories: [],
-      priceRange: { min: 0, max: 200 },
-      ratings: [],
-      inStock: null,
-      sortBy: "featured",
-    });
-  };
-
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filters.categories.length > 0) count += filters.categories.length;
-    if (filters.priceRange.min > 0 || filters.priceRange.max < 200) count++;
-    if (filters.ratings.length > 0) count += filters.ratings.length;
-    if (filters.inStock !== null) count++;
-    return count;
   };
 
   return (
@@ -106,7 +58,7 @@ const Filter = () => {
           <span className="font-medium text-slate-600">Filters</span>
           <div className="flex items-center gap-2">
             {getActiveFiltersCount() > 0 && (
-              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+              <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
                 {getActiveFiltersCount()}
               </span>
             )}
@@ -119,19 +71,22 @@ const Filter = () => {
       <div
         className={`${
           isFilterOpen ? "block" : "hidden"
-        } p-4 sm:p-6 border border-gray-200 rounded-lg bg-white lg:block lg:w-full shadow-md`}
+        } p-4 sm:p-6 border border-gray-200 rounded-lg bg-white lg:block w-full lg:w-70 shadow-md`}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+          <h2 className="text-lg font-semibold text-gray-900 flex gap-2">
+            Filters
+          </h2>
           {getActiveFiltersCount() > 0 && (
-            <button
+            <Button
+              variant="ghost"
               onClick={clearAllFilters}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              className="text-sm text-primary-100 hover:text-primary flex items-center gap-1"
             >
               <X size={16} />
               Clear all
-            </button>
+            </Button>
           )}
         </div>
 

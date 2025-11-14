@@ -8,15 +8,95 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { MobileFilter } from "@/components/MobileFilter";
 
+export interface FilterState {
+  categories: string[];
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  ratings: number[];
+  inStock: boolean | null;
+  sortBy: string;
+}
+
 const ShopContent = () => {
   const products = useAppSelector((state) => state.product.list);
   const [sortBy, setSortBy] = useState("featured");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [filters, setFilters] = useState<FilterState>({
+    categories: [],
+    priceRange: { min: 0, max: 200 },
+    ratings: [],
+    inStock: null,
+    sortBy: "Featured",
+  });
+
+  const handleCategoryChange = (category: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category],
+    }));
+  };
+
+  const handlePriceChange = (type: "min" | "max", value: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: { ...prev.priceRange, [type]: value },
+    }));
+  };
+
+  const handleRatingChange = (rating: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      ratings: prev.ratings.includes(rating)
+        ? prev.ratings.filter((r) => r !== rating)
+        : [...prev.ratings, rating],
+    }));
+  };
+
+  const handleStockChange = (value: boolean | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      inStock: value,
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      categories: [],
+      priceRange: { min: 0, max: 200 },
+      ratings: [],
+      inStock: null,
+      sortBy: "featured",
+    });
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.categories.length > 0) count += filters.categories.length;
+    if (filters.priceRange.min > 0 || filters.priceRange.max < 200) count++;
+    if (filters.ratings.length > 0) count += filters.ratings.length;
+    if (filters.inStock !== null) count++;
+    return count;
+  };
+
+  console.log(filters);
 
   return (
     <section className="max-w-7xl w-full min-h-[70vh] mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center sm:items-start justify-between gap-6 lg:gap-8 overflow-x-hidden">
       <div className="my-6 hidden lg:block">
-        <Filter />
+        <Filter
+          filters={filters}
+          setFilters={setFilters}
+          handleCategoryChange={handleCategoryChange}
+          handlePriceChange={handlePriceChange}
+          handleRatingChange={handleRatingChange}
+          handleStockChange={handleStockChange}
+          clearAllFilters={clearAllFilters}
+          getActiveFiltersCount={getActiveFiltersCount}
+        />
       </div>
 
       <div className="flex-1">
@@ -28,7 +108,16 @@ const ShopContent = () => {
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="lg:hidden flex-1">
-            <MobileFilter />
+            <MobileFilter
+              filters={filters}
+              setFilters={setFilters}
+              handleCategoryChange={handleCategoryChange}
+              handlePriceChange={handlePriceChange}
+              handleRatingChange={handleRatingChange}
+              handleStockChange={handleStockChange}
+              clearAllFilters={clearAllFilters}
+              getActiveFiltersCount={getActiveFiltersCount}
+            />
           </div>
 
           <div className="flex items-center justify-end flex-1 gap-3">
