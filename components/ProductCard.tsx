@@ -140,19 +140,29 @@ const ProductCard = ({ product, viewMode = "grid" }: ProductCardProps) => {
               />
             );
           })}
+
+          <span className="text-xs text-gray-600 ml-1 flex-shrink-0">
+            {rating.toFixed(1)}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-base font-bold text-gray-900">
-            {currency}
-            {product.price}
-          </span>
-          {product.mrp > product.price && (
-            <span className="text-sm text-gray-500 line-through">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-base font-bold text-gray-900">
               {currency}
-              {product.mrp}
+              {product.price}
             </span>
-          )}
+            {product.mrp > product.price && (
+              <span className="text-sm text-gray-500 line-through">
+                {currency}
+                {product.mrp}
+              </span>
+            )}
+          </div>
+
+          <span className="text-xs text-gray-400 ml-2 hidden sm:inline flex-shrink-0">
+            {product.category}
+          </span>
         </div>
       </div>
 

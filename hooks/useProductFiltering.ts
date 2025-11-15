@@ -13,49 +13,72 @@ export const useProductFiltering = (
 
     let filteredProducts = [...products];
 
-    // Category filter
+    // CATEGORY FILTER
     if (filters.categories.length > 0) {
       filteredProducts = filteredProducts.filter((product) =>
         filters.categories.includes(product.category)
       );
     }
 
-    // Price filter
+    // PRICE FILTER
     filteredProducts = filteredProducts.filter(
       (product) =>
         product.price >= filters.priceRange.min &&
         product.price <= filters.priceRange.max
     );
 
-    // Rating filter
+    // RATING FILTER
     if (filters.ratings.length > 0) {
-      filteredProducts = filteredProducts.filter((p) => {
-        const productRatingObj = productAverageRatings.find(
-          (r) => r.id === p.id
+      filteredProducts = filteredProducts.filter((product) => {
+        const ratingObj = productAverageRatings.find(
+          (r) => r.id === product.id
         );
-        const rating = productRatingObj?.averageRating ?? 0;
-        return filters.ratings.some((r) => rating >= r);
+        const average = ratingObj?.averageRating ?? 0;
+
+        return filters.ratings.some((r) => average >= r);
       });
     }
 
-    // Availability filter
+    // STOCK FILTER
     if (filters.inStock !== null) {
       filteredProducts = filteredProducts.filter(
         (product) => product.inStock === filters.inStock
       );
     }
 
-    // Sorting
+    // SORTING
     filteredProducts.sort((a, b) => {
       switch (sortBy) {
         case "price-low":
           return a.price - b.price;
+
         case "price-high":
           return b.price - a.price;
+
         case "name-asc":
           return a.name.localeCompare(b.name);
+
         case "name-desc":
           return b.name.localeCompare(a.name);
+
+        case "rating": {
+          const aRating =
+            productAverageRatings.find((r) => r.id === a.id)?.averageRating ??
+            0;
+          const bRating =
+            productAverageRatings.find((r) => r.id === b.id)?.averageRating ??
+            0;
+
+          return bRating - aRating;
+        }
+
+        case "newest": {
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        }
+
+        case "featured":
         default:
           return 0;
       }

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { MobileFilter } from "@/components/MobileFilter";
 import { useProductFiltering } from "@/hooks/useProductFiltering";
+import { Button } from "@/components/ui/button";
 
 export interface FilterState {
   categories: string[];
@@ -29,6 +30,16 @@ const ShopContent = () => {
     ratings: [],
     inStock: null,
   });
+
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters]);
 
   const handleCategoryChange = (category: string) => {
     setFilters((prev) => ({
@@ -80,7 +91,11 @@ const ShopContent = () => {
     return count;
   };
 
-  const filteredProducts = useProductFiltering(products, filters, sortBy);
+  const filteredProducts = useProductFiltering(
+    products,
+    debouncedFilters,
+    sortBy
+  );
 
   useEffect(() => {
     console.log(filters.ratings);
@@ -135,7 +150,7 @@ const ShopContent = () => {
 
         <div
           className={`
-          mb-32
+          mb-32 transition-all duration-300
           ${
             viewMode === "grid"
               ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 px-2 xl:gap-12"
@@ -143,13 +158,27 @@ const ShopContent = () => {
           }
         `}
         >
-          {filteredProducts.map((product) => (
-            <ProductCard
-              product={product}
-              key={product.id}
-              viewMode={viewMode}
-            />
-          ))}
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                viewMode={viewMode}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-500 text-lg mb-2">
+                No products found
+              </div>
+              <p className="text-gray-400 text-sm">
+                Try adjusting your filters or search terms
+              </p>
+              <Button onClick={clearAllFilters} className="text-white mt-4">
+                Clear All Filters
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </section>
