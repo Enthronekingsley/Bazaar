@@ -97,10 +97,6 @@ const ShopContent = () => {
     sortBy
   );
 
-  useEffect(() => {
-    console.log(filters.ratings);
-  }, [filters.ratings]);
-
   return (
     <section className="max-w-7xl w-full min-h-[70vh] mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center sm:items-start justify-between gap-6 lg:gap-8 overflow-x-hidden">
       <div className="my-6 hidden lg:block">
@@ -143,7 +139,7 @@ const ShopContent = () => {
               onSortChange={setSortBy}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
-              productCount={products.length}
+              productCount={filteredProducts.length}
             />
           </div>
         </div>
