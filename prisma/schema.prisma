@@ -107,9 +107,13 @@ enum EscrowReleaseReason {
   DISPUTE_RESOLUTION
 }
 
-enum LedgerEntryType {
-  DEBIT
-  CREDIT
+enum LedgerMovementCategory {
+  PAYMENT
+  RELEASE
+  FEE
+  REFUND
+  PAYOUT
+  DISPUTE
 }
 
 enum AccountType {
@@ -117,6 +121,8 @@ enum AccountType {
   SELLER
   ESCROW
   PLATFORM
+  GATEWAY
+  BANK
 }
 
 enum DisputeStatus {
@@ -614,8 +620,9 @@ model PaymentIntent {
   gatewayStatus    String?
   gatewayPayload   Json?
 
-  amountTotal Int
-  currency    String
+  amountTotal     Int
+  amountInSubunit Int
+  currency        String
 
   gatewayFee   Int
   platformFee  Int
@@ -685,12 +692,21 @@ model EscrowAccount {
   deals         Deal[]
 }
 
-model BalanceAccount {
+model PlatformAccount {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model LedgerAccount {
   id        String      @id @default(cuid())
   ownerType AccountType
   ownerId   String
   currency  String
   createdAt DateTime    @default(now())
+  isActive  Boolean     @default(true)
+  metadata  Json        @default("{}")
 
   ledger LedgerEntry[]
 
@@ -698,16 +714,16 @@ model BalanceAccount {
 }
 
 model LedgerEntry {
-  id        String          @id @default(cuid())
+  id        String                 @id @default(cuid())
   accountId String
-  type      LedgerEntryType
+  type      LedgerMovementCategory
   direction LedgerDirection
   amount    Int
   currency  String
   reference String
-  createdAt DateTime        @default(now())
+  createdAt DateTime               @default(now())
 
-  account BalanceAccount @relation(fields: [accountId], references: [id])
+  ledgerAccount LedgerAccount @relation(fields: [accountId], references: [id])
 
   @@unique([reference, accountId, type])
   @@index([accountId, createdAt])

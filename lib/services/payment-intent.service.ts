@@ -1,34 +1,25 @@
 import {
-  GatewayProvider,
   PaymentIntentStatus,
   EscrowStatus,
   Prisma,
+  AccountType,
+  LedgerMovementCategory,
 } from "@/app/generated/prisma/client";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import { getPaymentGateway } from "../payments/gateway-factory";
 import { calculateBazaarFees } from "../payments/fees";
-import { NormalizedWebhookEvent } from "../payments";
-
-type CreatePaymentIntentInput = {
-  orderId: string;
-  buyerId: string;
-  sellerId: string;
-  gateway: GatewayProvider;
-  amount: number;
-  currency: string;
-  email: string;
-  idempotencyKey: string;
-};
+import { CreatePaymentIntentInput, NormalizedWebhookEvent } from "../payments";
+import { ledgerService } from "./ledger-entry.service";
+import { ESCROW_TIMEOUT_MS } from "@/lib/constants/escrow";
 
 export class PaymentIntentService {
   async createPaymentIntent(input: CreatePaymentIntentInput) {
     const amountInSubunit = input.amount * 100;
-
     const fees = calculateBazaarFees(amountInSubunit);
 
     try {
-      const gatewayEntity = await prisma.paymentGateway.findUniqueOrThrow({
+      const gateway = await prisma.paymentGateway.findUniqueOrThrow({
         where: { provider: input.gateway },
       });
 
@@ -41,14 +32,15 @@ export class PaymentIntentService {
           buyerId: input.buyerId,
           sellerId: input.sellerId,
 
-          gatewayId: gatewayEntity.id,
+          gatewayId: gateway.id,
           gatewayProvider: input.gateway,
 
-          amountTotal: amountInSubunit,
+          amountTotal: input.amount,
+          amountInSubunit: amountInSubunit,
           currency: input.currency,
 
-          platformFee: fees.platformFee,
           gatewayFee: 0,
+          platformFee: fees.platformFee,
           sellerAmount: fees.sellerAmount,
           escrowAmount: fees.escrowAmount,
 
@@ -59,9 +51,8 @@ export class PaymentIntentService {
         },
       });
 
-      const gateway = getPaymentGateway(input.gateway);
-
-      const result = await gateway.initializePayment({
+      const gatewayClient = getPaymentGateway(input.gateway);
+      const result = await gatewayClient.initializePayment({
         reference: intent.reference,
         amount: intent.amountTotal,
         currency: intent.currency,
@@ -73,11 +64,8 @@ export class PaymentIntentService {
         where: { id: intent.id },
         data: {
           gatewayReference: result.reference,
-          gatewayStatus: "initialized",
           status: PaymentIntentStatus.PROCESSING,
-          metadata: {
-            authorizationUrl: result.authorizationUrl,
-          },
+          metadata: { authorizationUrl: result.authorizationUrl },
         },
       });
 
@@ -107,10 +95,9 @@ export class PaymentIntentService {
   }
 
   async processWebhook(event: NormalizedWebhookEvent) {
-    if (event.type === "UNHANDLED_EVENT") {
-      return;
-    }
-    const alreadyProcessed = await prisma.webhookEvent.findUnique({
+    if (event.type === "UNHANDLED_EVENT") return;
+
+    const processed = await prisma.webhookEvent.findUnique({
       where: {
         provider_reference_eventType: {
           provider: event.provider,
@@ -120,110 +107,161 @@ export class PaymentIntentService {
       },
     });
 
-    if (alreadyProcessed) return;
+    if (processed) return;
 
-    const webhook = await prisma.webhookEvent.create({
-      data: {
-        provider: event.provider,
-        reference: event.gatewayReference,
-        eventType: event.type,
-        payload: event.payload ?? {},
-      },
-    });
-
-    const intent = await prisma.paymentIntent.findUnique({
-      where: { gatewayReference: event.gatewayReference },
-    });
-
-    if (!intent) return;
-
-    if (
-      intent.status === PaymentIntentStatus.SUCCEEDED ||
-      intent.status === PaymentIntentStatus.FAILED ||
-      intent.status === PaymentIntentStatus.CANCELLED
-    ) {
-      return;
-    }
-
-    if (event.type === "PAYMENT_SUCCESS") {
-      await this.handlePaymentSuccess(intent.id, event, webhook.id);
-      return;
-    }
-
-    if (event.type === "PAYMENT_FAILED") {
-      await this.handlePaymentFailure(intent.id, event, webhook.id);
-      return;
-    }
-  }
-
-  private async handlePaymentSuccess(
-    paymentIntentId: string,
-    event: { amount: number; currency: string },
-    webhookId: string,
-  ) {
     await prisma.$transaction(async (tx) => {
-      const intent = await tx.paymentIntent.update({
-        where: { id: paymentIntentId },
-        data: {},
+      const webhook = await tx.webhookEvent.create({
+        data: {
+          provider: event.provider,
+          reference: event.gatewayReference,
+          eventType: event.type,
+          payload: event.payload ?? {},
+        },
+      });
+
+      const intent = await tx.paymentIntent.findUnique({
+        where: { gatewayReference: event.gatewayReference },
       });
 
       if (!intent) return;
-      if (intent.status === PaymentIntentStatus.SUCCEEDED) return;
+      if (intent.status !== PaymentIntentStatus.PROCESSING) return;
 
-      await tx.paymentIntent.update({
-        where: { id: intent.id },
-        data: {
-          status: PaymentIntentStatus.SUCCEEDED,
-          paidAt: new Date(),
-          escrowLockedAt: new Date(),
-        },
-      });
+      if (event.type === "PAYMENT_SUCCESS") {
+        const gatewayFee = event.gatewayFee ?? 0;
+        const sellerAmount =
+          intent.amountTotal - intent.platformFee - gatewayFee;
 
-      await tx.escrowAccount.create({
-        data: {
-          paymentIntentId: intent.id,
-          amountLocked: event.amount,
-          currency: event.currency,
-          status: EscrowStatus.HOLDING,
-          lockedAt: new Date(),
-          releaseAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-      });
+        const now = new Date();
+        const releaseAt = new Date(now.getTime() + ESCROW_TIMEOUT_MS);
 
-      await tx.webhookEvent.update({
-        where: { id: webhookId },
-        data: { paymentIntentId: intent.id },
-      });
-    });
-  }
+        await tx.paymentIntent.update({
+          where: { id: intent.id },
+          data: {
+            status: PaymentIntentStatus.SUCCEEDED,
+            paidAt: now,
+            escrowLockedAt: now,
+            escrowReleaseAt: releaseAt,
+            gatewayFee,
+            sellerAmount,
+          },
+        });
 
-  private async handlePaymentFailure(
-    paymentIntentId: string,
-    event: any,
-    webhookId: string,
-  ) {
-    await prisma.$transaction(async (tx) => {
-      const intent = await tx.paymentIntent.update({
-        where: { id: paymentIntentId },
-        data: {},
-      });
+        const escrow = await tx.escrowAccount.create({
+          data: {
+            paymentIntentId: intent.id,
+            amountLocked: sellerAmount,
+            currency: intent.currency,
+            status: EscrowStatus.HOLDING,
+            lockedAt: now,
+            releaseAt,
+          },
+        });
 
-      if (!intent) return;
-      if (intent.status === PaymentIntentStatus.FAILED) return;
-      if (intent.status === PaymentIntentStatus.SUCCEEDED) return;
+        await ledgerService.transfer(tx, {
+          from: {
+            ownerType: AccountType.BUYER,
+            ownerId: intent.buyerId,
+          },
+          to: {
+            ownerType: AccountType.PLATFORM,
+            ownerId: "GATEWAY",
+          },
+          amount: intent.amountTotal,
+          currency: intent.currency,
+          reference: intent.id,
+          type: LedgerMovementCategory.PAYMENT,
+        });
 
-      await tx.paymentIntent.update({
-        where: { id: intent.id },
-        data: {
-          status: PaymentIntentStatus.FAILED,
-          failureReason: event?.reason ?? "gateway_failure",
-        },
-      });
+        await ledgerService.transfer(tx, {
+          from: {
+            ownerType: AccountType.PLATFORM,
+            ownerId: "GATEWAY",
+          },
+          to: {
+            ownerType: AccountType.PLATFORM,
+            ownerId: "GATEWAY_FEE",
+          },
+          amount: gatewayFee,
+          currency: intent.currency,
+          reference: intent.id,
+          type: LedgerMovementCategory.FEE,
+        });
 
-      await tx.webhookEvent.update({
-        where: { id: webhookId },
-        data: { paymentIntentId: intent.id },
-      });
+        await ledgerService.transfer(tx, {
+          from: {
+            ownerType: AccountType.PLATFORM,
+            ownerId: "GATEWAY",
+          },
+          to: {
+            ownerType: AccountType.ESCROW,
+            ownerId: escrow.id,
+          },
+          amount: sellerAmount + intent.platformFee,
+          currency: intent.currency,
+          reference: intent.id,
+          type: LedgerMovementCategory.PAYMENT,
+        });
+
+        await ledgerService.transfer(tx, {
+          from: {
+            ownerType: AccountType.ESCROW,
+            ownerId: escrow.id,
+          },
+          to: {
+            ownerType: AccountType.PLATFORM,
+            ownerId: "COMMISSION",
+          },
+          amount: intent.platformFee,
+          currency: intent.currency,
+          reference: intent.id,
+          type: LedgerMovementCategory.RELEASE,
+        });
+
+        await ledgerService.transfer(tx, {
+          from: {
+            ownerType: AccountType.ESCROW,
+            ownerId: escrow.id,
+          },
+          to: {
+            ownerType: AccountType.SELLER,
+            ownerId: intent.sellerId,
+          },
+          amount: sellerAmount,
+          currency: intent.currency,
+          reference: intent.id,
+          type: LedgerMovementCategory.RELEASE,
+        });
+
+        await ledgerService.transfer(tx, {
+          from: {
+            ownerType: AccountType.SELLER,
+            ownerId: intent.sellerId,
+          },
+          to: {
+            ownerType: AccountType.PLATFORM,
+            ownerId: "BANK",
+          },
+          amount: sellerAmount,
+          currency: intent.currency,
+          reference: intent.id,
+          type: LedgerMovementCategory.PAYOUT,
+        });
+
+        await tx.webhookEvent.update({
+          where: { id: webhook.id },
+          data: { paymentIntentId: intent.id },
+        });
+      }
+
+      if (event.type === "PAYMENT_FAILED") {
+        await tx.paymentIntent.update({
+          where: { id: intent.id },
+          data: {
+            status: PaymentIntentStatus.FAILED,
+            failureReason: event.reason ?? "gateway_failure",
+          },
+        });
+      }
     });
   }
 }

@@ -4,11 +4,9 @@ import { InitializePaymentInput, InitializePaymentResponse } from "../../types";
 export async function initializePaystackPayment(
   input: InitializePaymentInput,
 ): Promise<InitializePaymentResponse> {
-  const amountInSubunit = input.amount;
-
   const body = {
     email: input.email,
-    amount: amountInSubunit,
+    amount: input.amount,
     currency: input.currency,
     reference: input.reference,
     metadata: input.metadata ?? {},

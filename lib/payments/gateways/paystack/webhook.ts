@@ -24,7 +24,8 @@ export function handlePaystackWebhook(event: any): NormalizedWebhookEvent {
         type: "PAYMENT_SUCCESS",
         provider: GatewayProvider.PAYSTACK,
         gatewayReference: data.reference,
-        amount: data.amount / 100,
+        gatewayFee: data.fees,
+        amount: data.amount,
         currency: data.currency,
         payload: data,
       };

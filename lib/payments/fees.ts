@@ -1,4 +1,4 @@
-export const BAZAAR_PLATFORM_FEE_PERCENT = 0.07;
+export const BAZAAR_PLATFORM_FEE_PERCENT = 0.05;
 
 export function calculateBazaarFees(amountTotal: number) {
   const platformFee = Math.round(amountTotal * BAZAAR_PLATFORM_FEE_PERCENT);
@@ -7,6 +7,6 @@ export function calculateBazaarFees(amountTotal: number) {
   return {
     platformFee,
     sellerAmount,
-    escrowAmount: sellerAmount,
+    escrowAmount: amountTotal,
   };
 }

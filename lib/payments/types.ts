@@ -43,6 +43,7 @@ type PaymentSuccessEvent = {
   type: "PAYMENT_SUCCESS";
   provider: GatewayProvider;
   gatewayReference: string;
+  gatewayFee: number;
   amount: number;
   currency: string;
   payload?: any;
@@ -52,6 +53,7 @@ type PaymentFailedEvent = {
   type: "PAYMENT_FAILED";
   provider: GatewayProvider;
   gatewayReference: string;
+  reason?: string;
   payload?: any;
 };
 
@@ -65,3 +67,14 @@ export type NormalizedWebhookEvent =
   | PaymentSuccessEvent
   | PaymentFailedEvent
   | UnhandledGatewayEvent;
+
+export type CreatePaymentIntentInput = {
+  orderId: string;
+  buyerId: string;
+  sellerId: string;
+  gateway: GatewayProvider;
+  amount: number;
+  currency: string;
+  email: string;
+  idempotencyKey: string;
+};

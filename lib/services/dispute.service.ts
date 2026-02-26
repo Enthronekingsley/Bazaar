@@ -1,55 +1,62 @@
 import prisma from "@/lib/prisma";
-import { EscrowStatus } from "@/app/generated/prisma/client";
-import { StateGuards } from "./state-guards";
+import {
+  EscrowStatus,
+  DisputeResolution,
+  AccountType,
+  LedgerEntryType,
+} from "@/app/generated/prisma/client";
+import { ledgerService } from "./ledger-entry.service";
 
 export class DisputeService {
-  async openDispute(escrowId: string, raisedById: string, reason: string) {
+  async openDispute(escrowId: string, reason: string) {
     await prisma.$transaction(async (tx) => {
       const escrow = await tx.escrowAccount.findUnique({
         where: { id: escrowId },
-        lock: { mode: "for update" },
       });
 
       if (!escrow) throw new Error("Escrow not found");
-
-      StateGuards.assertEscrowTransition(escrow.status, EscrowStatus.DISPUTED);
+      if (escrow.status !== EscrowStatus.HOLDING) return;
 
       await tx.escrowAccount.update({
         where: { id: escrow.id },
-        data: {
-          status: EscrowStatus.DISPUTED,
-        },
+        data: { status: EscrowStatus.DISPUTED },
       });
 
       await tx.dispute.create({
         data: {
-          escrowAccountId: escrow.id,
-          raisedById,
+          escrowId,
           reason,
-          status: "OPEN",
+          evidence: {},
         },
       });
     });
   }
 
-  async resolveDispute(
-    disputeId: string,
-    resolution: "RELEASE_TO_SELLER" | "REFUND_BUYER",
-  ) {
+  async resolveDispute(disputeId: string, resolution: DisputeResolution) {
     await prisma.$transaction(async (tx) => {
       const dispute = await tx.dispute.findUnique({
         where: { id: disputeId },
-        include: { escrowAccount: true },
-        lock: { mode: "for update" },
+        include: {
+          escrow: { include: { paymentIntent: true } },
+        },
       });
 
-      if (!dispute) throw new Error("Dispute not found");
+      if (!dispute || !dispute.escrow) throw new Error("Invalid dispute");
 
-      const escrow = dispute.escrowAccount;
+      const escrow = dispute.escrow;
 
-      if (!escrow) throw new Error("Escrow missing");
+      if (escrow.status !== EscrowStatus.DISPUTED) return;
 
-      StateGuards.assertEscrowTransition(escrow.status, EscrowStatus.RELEASED);
+      const recipient =
+        resolution === DisputeResolution.BUYER
+          ? {
+              ownerType: AccountType.BUYER,
+              ownerId: escrow.paymentIntent.buyerId,
+            }
+          : {
+              ownerType: AccountType.SELLER,
+              ownerId: escrow.paymentIntent.sellerId,
+            };
 
       await tx.escrowAccount.update({
         where: { id: escrow.id },
@@ -59,25 +66,21 @@ export class DisputeService {
         },
       });
 
+      await ledgerService.transfer(tx, {
+        from: { ownerType: AccountType.ESCROW, ownerId: escrow.id },
+        to: recipient,
+        amount: escrow.amountLocked,
+        currency: escrow.currency,
+        reference: dispute.id,
+        type: LedgerEntryType.DISPUTE,
+      });
+
       await tx.dispute.update({
         where: { id: dispute.id },
         data: {
-          status: "RESOLVED",
           resolvedAt: new Date(),
           resolution,
         },
-      });
-
-      await ledgerService.post({
-        escrowId: escrow.id,
-        paymentIntentId: escrow.paymentIntentId!,
-        amount: escrow.amountLocked,
-        currency: escrow.currency,
-        type:
-          resolution === "RELEASE_TO_SELLER"
-            ? "SELLER_PAYOUT"
-            : "ESCROW_RELEASE",
-        reference: dispute.id,
       });
     });
   }

@@ -40,7 +40,7 @@ async function main() {
       isActive: true,
       slug: "bazaar-main-store",
       logo: "https://picsum.photos/200",
-      userId: adminUser.id, // ✅ FK satisfied
+      userId: adminUser.id,
     },
   });
 
@@ -404,6 +404,18 @@ async function main() {
   });
 
   console.log("Payment gateways seeded");
+
+  await prisma.platformAccount.createMany({
+    data: [
+      { code: "GATEWAY", name: "Gateway Holding Account" },
+      { code: "COMMISSION", name: "Platform Commission Revenue" },
+      { code: "GATEWAY_FEE", name: "Gateway Processing Fees" },
+      { code: "BANK", name: "Platform Bank Account" },
+    ],
+    skipDuplicates: true,
+  });
+
+  console.log("Platform Account seeded");
 }
 
 main()

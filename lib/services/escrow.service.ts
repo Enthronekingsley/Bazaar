@@ -1,48 +1,53 @@
 import prisma from "@/lib/prisma";
-import { EscrowStatus, DealStatus } from "@/app/generated/prisma/client";
-import { StateGuards } from "./state-guards";
-import { ledgerService } from "./ledger.service";
+import {
+  EscrowStatus,
+  EscrowReleaseReason,
+  AccountType,
+  LedgerEntryType,
+  DealStatus,
+} from "@/app/generated/prisma/client";
+import { ledgerService } from "./ledger-entry.service";
 
 export class EscrowService {
-  async releaseEscrow(escrowId: string) {
+  async releaseEscrow(escrowId: string, reason: EscrowReleaseReason) {
     await prisma.$transaction(async (tx) => {
       const escrow = await tx.escrowAccount.findUnique({
         where: { id: escrowId },
-        include: { paymentIntent: true, deal: true },
-        lock: { mode: "for update" },
+        include: {
+          paymentIntent: true,
+          deals: true,
+        },
       });
 
       if (!escrow) throw new Error("Escrow not found");
-
-      StateGuards.assertEscrowTransition(escrow.status, EscrowStatus.RELEASED);
+      if (escrow.status !== EscrowStatus.HOLDING) return;
 
       await tx.escrowAccount.update({
         where: { id: escrow.id },
         data: {
           status: EscrowStatus.RELEASED,
           releasedAt: new Date(),
+          releaseReason: reason,
         },
       });
 
-      // Ledger: release
-      await ledgerService.post({
-        escrowId: escrow.id,
-        paymentIntentId: escrow.paymentIntentId!,
+      await ledgerService.transfer(tx, {
+        from: { ownerType: AccountType.ESCROW, ownerId: escrow.id },
+        to: {
+          ownerType: AccountType.SELLER,
+          ownerId: escrow.paymentIntent.sellerId,
+        },
         amount: escrow.amountLocked,
         currency: escrow.currency,
-        type: "ESCROW_RELEASE",
         reference: escrow.id,
+        type: LedgerEntryType.CREDIT,
       });
 
-      // Deal completion
-      if (escrow.deal) {
-        StateGuards.assertDealTransition(
-          escrow.deal.status,
-          DealStatus.COMPLETED,
-        );
+      for (const deal of escrow.deals) {
+        if (deal.status !== DealStatus.IN_ESCROW) continue;
 
         await tx.deal.update({
-          where: { id: escrow.deal.id },
+          where: { id: deal.id },
           data: {
             status: DealStatus.COMPLETED,
             completedAt: new Date(),
